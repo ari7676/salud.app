@@ -1,66 +1,137 @@
-#!/usr/bin/env python3
-"""
-Init script para Health App MVP
-Crea la BD, tablasy datos de ejemplo
-"""
-
 import sqlite3
 import os
-from pathlib import Path
 
-DB_PATH = "health_app.db"
+db_path = 'health_app.db'
 
-def init_db():
-    """Crea la base de datos y ejecuta el schema"""
-    
-    # Eliminar BD anterior si existe (solo en dev)
-    if Path(DB_PATH).exists():
-        print(f"[!] BD existente. Usando: {DB_PATH}")
-        return
-    
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Leer y ejecutar schema
-    with open("health_app_schema.sql", "r", encoding="utf-8") as f:
-        schema = f.read()
-    
-    # Ejecutar statement por statement
-    for statement in schema.split(";"):
-        if statement.strip():
-            try:
-                cursor.execute(statement)
-            except sqlite3.Error as e:
-                print(f"[ERROR] {e}\n{statement}\n")
-    
-    conn.commit()
-    conn.close()
-    print(f"✓ BD creada: {DB_PATH}")
+if os.path.exists(db_path):
+    os.remove(db_path)
 
-def get_db():
-    """Context manager para conexiones"""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Acceso por columna
-    return conn
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
 
-def verify_schema():
-    """Verifica que todas las tablas existan"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
-    
-    required = ['usuarios', 'turnos', 'medicinas', 'historial_medicinas', 'recordatorios']
-    missing = [t for t in required if t not in tables]
-    
-    if missing:
-        print(f"[ERROR] Tablas faltantes: {missing}")
-        return False
-    
-    print(f"✓ Schema verificado. Tablas: {', '.join(tables)}")
-    return True
+# Create tables
+cursor.execute('''CREATE TABLE usuarios (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  email TEXT UNIQUE,
+  tipo_usuario TEXT,
+  usuario_padre_id INTEGER,
+  obra_social TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)''')
 
-if __name__ == "__main__":
-    init_db()
-    verify_schema()
+cursor.execute('''CREATE TABLE turnos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL,
+  especialidad TEXT NOT NULL,
+  medico TEXT,
+  fecha_turno DATE NOT NULL,
+  hora_turno TIME NOT NULL,
+  lugar TEXT,
+  obra_social TEXT,
+  asistido BOOLEAN DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE medicinas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL,
+  nombre_droga TEXT NOT NULL,
+  dosis TEXT NOT NULL,
+  frecuencia TEXT NOT NULL,
+  horario_1 TIME,
+  horario_2 TIME,
+  horario_3 TIME,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  indicacion TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE historial_medicinas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  medicina_id INTEGER NOT NULL,
+  accion TEXT,
+  fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(medicina_id) REFERENCES medicinas(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE recordatorios (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  medicina_id INTEGER NOT NULL,
+  usuario_id INTEGER NOT NULL,
+  horario_recordatorio TIME NOT NULL,
+  completado BOOLEAN DEFAULT 0,
+  FOREIGN KEY(medicina_id) REFERENCES medicinas(id) ON DELETE CASCADE,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE historiales_clinicos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL UNIQUE,
+  resumen_general TEXT,
+  alergias TEXT,
+  enfermedades_cronicas TEXT,
+  operaciones_previas TEXT,
+  observaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE contactos_emergencia (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL,
+  nombre TEXT NOT NULL,
+  relacion TEXT,
+  telefono TEXT NOT NULL,
+  email TEXT,
+  disponibilidad TEXT,
+  notas TEXT,
+  es_principal BOOLEAN DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+cursor.execute('''CREATE TABLE condiciones_medicas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL,
+  tipo TEXT,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  fecha_diagnostico DATE,
+  estado TEXT,
+  tratamiento TEXT,
+  medico_responsable TEXT,
+  observaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)''')
+
+# Insert sample data
+cursor.execute('INSERT INTO usuarios (nombre, email, tipo_usuario, obra_social) VALUES (?, ?, ?, ?)',
+('Juan Perez', 'juan@example.com', 'titular', 'OSDE 210'))
+
+cursor.execute('INSERT INTO usuarios (nombre, tipo_usuario, usuario_padre_id) VALUES (?, ?, ?)',
+('Mateo Perez', 'familiar', 1))
+
+cursor.execute('INSERT INTO turnos (usuario_id, especialidad, medico, fecha_turno, hora_turno, lugar) VALUES (?, ?, ?, ?, ?, ?)',
+(1, 'Cardiologia', 'Dr. Garcia', '2026-06-10', '10:30', 'Clinica Central'))
+
+cursor.execute('INSERT INTO medicinas (usuario_id, nombre_droga, dosis, frecuencia, horario_1, fecha_inicio, indicacion) VALUES (?, ?, ?, ?, ?, ?, ?)',
+(1, 'Atorvastatina', '20 mg', 'cada 24h', '20:00', '2026-01-01', 'Colesterol'))
+
+cursor.execute('INSERT INTO historiales_clinicos (usuario_id, resumen_general, alergias) VALUES (?, ?, ?)',
+(1, 'Paciente con hipertension controlada', 'Penicilina'))
+
+cursor.execute('INSERT INTO contactos_emergencia (usuario_id, nombre, relacion, telefono, es_principal) VALUES (?, ?, ?, ?, ?)',
+(1, 'Mariana Perez', 'Esposa', '+549112345678', 1))
+
+cursor.execute('INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, estado) VALUES (?, ?, ?, ?)',
+(1, 'enfermedad', 'Hipertension', 'controlada'))
+
+conn.commit()
+conn.close()
+
+print('BD creada: health_app.db')

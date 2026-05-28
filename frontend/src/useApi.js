@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const API_URL = 'https://salud-app-backend.onrender.com/api';
+const API_URL = '/api';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);

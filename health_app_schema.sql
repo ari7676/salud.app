@@ -97,13 +97,21 @@ CREATE TABLE recordatorios (
   FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
--- INDICES para búsquedas rápidas
-CREATE INDEX idx_usuarios_email ON usuarios(email);
-CREATE INDEX idx_usuarios_padre ON usuarios(usuario_padre_id);
-CREATE INDEX idx_turnos_usuario ON turnos(usuario_id);
-CREATE INDEX idx_turnos_fecha ON turnos(fecha_turno);
-CREATE INDEX idx_medicinas_usuario ON medicinas(usuario_id);
-CREATE INDEX idx_medicinas_fecha_fin ON medicinas(fecha_fin);
+-- TABLA: HISTORIALES_CLINICOS (resumen clínico del usuario)
+CREATE TABLE historiales_clinicos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL UNIQUE,
+  resumen_general TEXT, -- resumen general de salud
+  alergias TEXT, -- alergias (separadas por coma)
+  enfermedades_cronicas TEXT, -- diabetes, hipertensión, etc
+  operaciones_previas TEXT, -- historial quirúrgico
+  hospitalizaciones TEXT, -- historial de internaciones
+  observaciones TEXT, -- observaciones generales
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);\n\n-- TABLA: CONTACTOS_EMERGENCIA (familiares/conocidos de emergencia)
+CREATE TABLE contactos_emergencia (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  usuario_id INTEGER NOT NULL,\n  nombre TEXT NOT NULL,\n  relacion TEXT, -- mamá, papá, hermano, amigo, vecino\n  telefono TEXT NOT NULL,\n  telefono_alternativo TEXT,\n  email TEXT,\n  direccion TEXT,\n  disponibilidad TEXT, -- horarios disponibles\n  notas TEXT,\n  es_principal BOOLEAN DEFAULT 0, -- contacto principal\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE\n);\n\n-- TABLA: CONDICIONES_MEDICAS (enfermedades, alergias, operaciones específicas)\nCREATE TABLE condiciones_medicas (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  usuario_id INTEGER NOT NULL,\n  tipo TEXT CHECK(tipo IN ('enfermedad', 'alergia', 'operacion')), -- tipo de condición\n  nombre TEXT NOT NULL, -- diabetes, apendicitis, penicilina\n  descripcion TEXT,\n  fecha_diagnostico DATE,\n  fecha_operacion DATE, -- para operaciones\n  estado TEXT, -- activa, controlada, curada, resuelta\n  tratamiento TEXT, -- tratamiento actual\n  medico_responsable TEXT,\n  hospital_clinica TEXT,\n  observaciones TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE\n);\n\n-- INDICES para búsquedas rápidas\nCREATE INDEX idx_usuarios_email ON usuarios(email);\nCREATE INDEX idx_usuarios_padre ON usuarios(usuario_padre_id);\nCREATE INDEX idx_turnos_usuario ON turnos(usuario_id);\nCREATE INDEX idx_turnos_fecha ON turnos(fecha_turno);\nCREATE INDEX idx_medicinas_usuario ON medicinas(usuario_id);\nCREATE INDEX idx_medicinas_fecha_fin ON medicinas(fecha_fin);\nCREATE INDEX idx_historiales_usuario ON historiales_clinicos(usuario_id);\nCREATE INDEX idx_contactos_usuario ON contactos_emergencia(usuario_id);\nCREATE INDEX idx_condiciones_usuario ON condiciones_medicas(usuario_id);
 
 -- ============================================
 -- DATOS DE EJEMPLO
@@ -134,3 +142,42 @@ VALUES (1, 'Losartán', '50', 'mg', 'cada 24h', '08:00', NULL, NULL, '2025-11-01
 
 INSERT INTO medicinas (usuario_id, nombre_droga, dosis, unidad, frecuencia, horario_1, horario_2, horario_3, fecha_inicio, indicacion, fecha_fin, cantidad_frasco)
 VALUES (2, 'Amoxicilina', '250', 'mg', 'cada 8h', '08:00', '14:00', '20:00', '2026-05-20', 'Infección respiratoria', '2026-05-27', 1);
+
+-- Historial clínico Juan Pérez
+INSERT INTO historiales_clinicos (usuario_id, resumen_general, alergias, enfermedades_cronicas, operaciones_previas, observaciones)
+VALUES (1, 'Paciente con hipertensión controlada y colesterol elevado. Buen estado general.', 'Penicilina, ASA', 'Hipertensión arterial, Hipercolesterolemia', 'Apendicectomía (2005)', 'Sigue tratamiento farmacológico regular');
+
+-- Historial clínico Mateo Pérez
+INSERT INTO historiales_clinicos (usuario_id, resumen_general, alergias, enfermedades_cronicas, operaciones_previas, observaciones)
+VALUES (2, 'Niño sano, desarrollo normal. Alergias estacionales controladas.', 'Polen, ácaros', NULL, NULL, 'Realizar seguimiento pediátrico regular');
+
+-- Contactos de emergencia Juan Pérez
+INSERT INTO contactos_emergencia (usuario_id, nombre, relacion, telefono, telefono_alternativo, es_principal)
+VALUES (1, 'Mariana Pérez', 'Esposa', '+549112345678', '+54111234567', 1);
+
+INSERT INTO contactos_emergencia (usuario_id, nombre, relacion, telefono, email, es_principal)
+VALUES (1, 'Dr. García', 'Cardiólogo', '+54119876543', 'drgarcia@clinic.com', 0);
+
+-- Contactos de emergencia Mateo Pérez
+INSERT INTO contactos_emergencia (usuario_id, nombre, relacion, telefono, es_principal)
+VALUES (2, 'Juan Pérez', 'Padre', '+549112345670', 1);
+
+-- Condiciones médicas Juan Pérez
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, descripcion, fecha_diagnostico, estado, tratamiento, medico_responsable, observaciones)
+VALUES (1, 'enfermedad', 'Hipertensión arterial', 'HTA esencial estadío 2', '2010-03-15', 'controlada', 'Losartán 50mg diarios', 'Dr. García', 'Controles cada 3 meses');
+
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, descripcion, fecha_diagnostico, estado, tratamiento, medico_responsable)
+VALUES (1, 'enfermedad', 'Hipercolesterolemia', 'Colesterol LDL elevado', '2015-08-20', 'controlada', 'Atorvastatina 20mg diarios', 'Dr. García');
+
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, fecha_operacion, estado, hospital_clinica, observaciones)
+VALUES (1, 'operacion', 'Apendicectomía', '2005-06-10', 'resuelta', 'Hospital Central', 'Sin complicaciones');
+
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, estado, observaciones)
+VALUES (1, 'alergia', 'Penicilina', 'activa', 'Anafilaxia leve, usar amoxicilina con cuidado');
+
+-- Condiciones médicas Mateo Pérez
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, estado, observaciones)
+VALUES (2, 'alergia', 'Polen', 'activa', 'Alergias estacionales primavera-verano');
+
+INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, estado, observaciones)
+VALUES (2, 'alergia', 'Ácaros', 'activa', 'Rinitis alérgica, usar antihistamínicos en invierno');

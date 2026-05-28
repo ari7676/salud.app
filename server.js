@@ -233,6 +233,154 @@ app.put('/api/medicinas/:id', async (req, res) => {
   }
 });
 
+// ============================================
+// RUTAS: HISTORIALES CLÍNICOS
+// ============================================
+
+// GET historial clínico de un usuario
+app.get('/api/historiales/:usuario_id', (req, res) => {
+  try {
+    const sql = 'SELECT * FROM historiales_clinicos WHERE usuario_id = ?';
+    const stmt = db.prepare(sql);
+    const result = stmt.get(req.params.usuario_id);
+    res.json(result || {});
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST crear/actualizar historial clínico
+app.post('/api/historiales', (req, res) => {
+  try {
+    const { usuario_id, resumen_general, alergias, enfermedades_cronicas, operaciones_previas, hospitalizaciones, observaciones } = req.body;
+    
+    // Verificar si existe
+    const existing = db.prepare('SELECT id FROM historiales_clinicos WHERE usuario_id = ?').get(usuario_id);
+    
+    if (existing) {
+      const sql = `UPDATE historiales_clinicos 
+                   SET resumen_general = ?, alergias = ?, enfermedades_cronicas = ?, 
+                       operaciones_previas = ?, hospitalizaciones = ?, observaciones = ?, updated_at = CURRENT_TIMESTAMP
+                   WHERE usuario_id = ?`;
+      db.prepare(sql).run(resumen_general, alergias, enfermedades_cronicas, operaciones_previas, hospitalizaciones, observaciones, usuario_id);
+      res.json({ id: existing.id, message: 'Historial actualizado' });
+    } else {
+      const sql = `INSERT INTO historiales_clinicos (usuario_id, resumen_general, alergias, enfermedades_cronicas, operaciones_previas, hospitalizaciones, observaciones)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      const result = db.prepare(sql).run(usuario_id, resumen_general, alergias, enfermedades_cronicas, operaciones_previas, hospitalizaciones, observaciones);
+      res.json({ id: result.lastID, message: 'Historial creado' });
+    }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// RUTAS: CONTACTOS DE EMERGENCIA
+// ============================================
+
+// GET contactos de emergencia de un usuario
+app.get('/api/contactos/:usuario_id', (req, res) => {
+  try {
+    const sql = 'SELECT * FROM contactos_emergencia WHERE usuario_id = ? ORDER BY es_principal DESC';
+    const stmt = db.prepare(sql);
+    const results = stmt.all(req.params.usuario_id);
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST crear contacto de emergencia
+app.post('/api/contactos', (req, res) => {
+  try {
+    const { usuario_id, nombre, relacion, telefono, telefono_alternativo, email, direccion, disponibilidad, notas, es_principal } = req.body;
+    const sql = `INSERT INTO contactos_emergencia (usuario_id, nombre, relacion, telefono, telefono_alternativo, email, direccion, disponibilidad, notas, es_principal)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const result = db.prepare(sql).run(usuario_id, nombre, relacion, telefono, telefono_alternativo || null, email || null, direccion || null, disponibilidad || null, notas || null, es_principal || 0);
+    res.json({ id: result.lastID, message: 'Contacto creado' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// PUT actualizar contacto de emergencia
+app.put('/api/contactos/:id', (req, res) => {
+  try {
+    const { nombre, relacion, telefono, telefono_alternativo, email, direccion, disponibilidad, notas, es_principal } = req.body;
+    const sql = `UPDATE contactos_emergencia 
+                 SET nombre = ?, relacion = ?, telefono = ?, telefono_alternativo = ?, email = ?, direccion = ?, disponibilidad = ?, notas = ?, es_principal = ?
+                 WHERE id = ?`;
+    db.prepare(sql).run(nombre, relacion, telefono, telefono_alternativo || null, email || null, direccion || null, disponibilidad || null, notas || null, es_principal || 0, req.params.id);
+    res.json({ message: 'Contacto actualizado' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE contacto de emergencia
+app.delete('/api/contactos/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM contactos_emergencia WHERE id = ?').run(req.params.id);
+    res.json({ message: 'Contacto eliminado' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// RUTAS: CONDICIONES MÉDICAS
+// ============================================
+
+// GET condiciones médicas de un usuario
+app.get('/api/condiciones/:usuario_id', (req, res) => {
+  try {
+    const sql = 'SELECT * FROM condiciones_medicas WHERE usuario_id = ? ORDER BY tipo, nombre';
+    const stmt = db.prepare(sql);
+    const results = stmt.all(req.params.usuario_id);
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST crear condición médica
+app.post('/api/condiciones', (req, res) => {
+  try {
+    const { usuario_id, tipo, nombre, descripcion, fecha_diagnostico, fecha_operacion, estado, tratamiento, medico_responsable, hospital_clinica, observaciones } = req.body;
+    const sql = `INSERT INTO condiciones_medicas (usuario_id, tipo, nombre, descripcion, fecha_diagnostico, fecha_operacion, estado, tratamiento, medico_responsable, hospital_clinica, observaciones)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const result = db.prepare(sql).run(usuario_id, tipo, nombre, descripcion || null, fecha_diagnostico || null, fecha_operacion || null, estado || null, tratamiento || null, medico_responsable || null, hospital_clinica || null, observaciones || null);
+    res.json({ id: result.lastID, message: 'Condición creada' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// PUT actualizar condición médica
+app.put('/api/condiciones/:id', (req, res) => {
+  try {
+    const { tipo, nombre, descripcion, fecha_diagnostico, fecha_operacion, estado, tratamiento, medico_responsable, hospital_clinica, observaciones } = req.body;
+    const sql = `UPDATE condiciones_medicas 
+                 SET tipo = ?, nombre = ?, descripcion = ?, fecha_diagnostico = ?, fecha_operacion = ?, estado = ?, tratamiento = ?, medico_responsable = ?, hospital_clinica = ?, observaciones = ?, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?`;
+    db.prepare(sql).run(tipo, nombre, descripcion || null, fecha_diagnostico || null, fecha_operacion || null, estado || null, tratamiento || null, medico_responsable || null, hospital_clinica || null, observaciones || null, req.params.id);
+    res.json({ message: 'Condición actualizada' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE condición médica
+app.delete('/api/condiciones/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM condiciones_medicas WHERE id = ?').run(req.params.id);
+    res.json({ message: 'Condición eliminada' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
