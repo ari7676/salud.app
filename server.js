@@ -449,6 +449,51 @@ app.delete('/api/prepagas/:id', (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// ASISTENTE IA
+app.post('/api/asistente', async (req, res) => {
+  const { messages, usuario_id } = req.body;
+  
+  try {
+    const [turnos, medicinas, condiciones] = await Promise.all([
+      dbAll('SELECT * FROM turnos WHERE usuario_id = ?', [usuario_id]),
+      dbAll('SELECT * FROM medicinas WHERE usuario_id = ?', [usuario_id]),
+      dbAll('SELECT * FROM condiciones_medicas WHERE usuario_id = ?', [usuario_id]),
+    ]);
+
+    const system = `Sos un asistente de salud personal. Respondé en español, de forma clara y empática.
+No reemplazás a un médico — siempre recomendá consultar un profesional ante dudas serias.
+
+TURNOS MÉDICOS:
+${turnos.length ? turnos.map(t => `- ${t.especialidad} con ${t.medico} el ${t.fecha_turno} a las ${t.hora_turno}`).join('\n') : 'Sin turnos'}
+
+MEDICAMENTOS:
+${medicinas.length ? medicinas.map(m => `- ${m.nombre_droga} ${m.dosis}${m.unidad} cada ${m.frecuencia}`).join('\n') : 'Sin medicamentos'}
+
+CONDICIONES MÉDICAS:
+${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones'}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system,
+        messages,
+      }),
+    });
+
+    const data = await response.json();
+    res.json({ text: data.content[0].text });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

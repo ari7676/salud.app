@@ -1,52 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://salud-app-backend.onrender.com';
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 export default function Asistente({ usuarioId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [contexto, setContexto] = useState(null);
   const bottomRef = useRef(null);
-
-  useEffect(() => {
-    cargarContexto();
-  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  async function cargarContexto() {
-    try {
-      const [turnos, medicinas, condiciones] = await Promise.all([
-        fetch(`${API_URL}/turnos?usuario_id=${usuarioId}`).then(r => r.json()),
-        fetch(`${API_URL}/medicinas?usuario_id=${usuarioId}`).then(r => r.json()),
-        fetch(`${API_URL}/condiciones?usuario_id=${usuarioId}`).then(r => r.json()),
-      ]);
-      setContexto({ turnos, medicinas, condiciones });
-    } catch (e) {
-      console.error('Error cargando contexto:', e);
-    }
-  }
-
-  function buildSystemPrompt() {
-    if (!contexto) return 'Sos un asistente de salud personal. Respondé en español, de forma clara y empática.';
-    return `Sos un asistente de salud personal. Respondé en español, de forma clara y empática.
-No reemplazás a un médico — siempre recomendá consultar un profesional ante dudas serias.
-
-Datos actuales del paciente:
-
-TURNOS MÉDICOS:
-${contexto.turnos?.length ? contexto.turnos.map(t => `- ${t.especialidad} con ${t.medico} el ${t.fecha} a las ${t.hora}`).join('\n') : 'Sin turnos registrados'}
-
-MEDICAMENTOS:
-${contexto.medicinas?.length ? contexto.medicinas.map(m => `- ${m.nombre} ${m.dosis} cada ${m.frecuencia_horas}hs`).join('\n') : 'Sin medicamentos registrados'}
-
-CONDICIONES MÉDICAS:
-${contexto.condiciones?.length ? contexto.condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones registradas'}`;
-  }
 
   async function enviar() {
     if (!input.trim() || loading) return;
@@ -57,24 +21,13 @@ ${contexto.condiciones?.length ? contexto.condiciones.map(c => `- ${c.nombre}: $
     setLoading(true);
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(`${API_URL}/api/asistente`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-client-side-keys-allowed': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1024,
-          system: buildSystemPrompt(),
-          messages: newMessages,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages, usuario_id: usuarioId }),
       });
-
       const data = await response.json();
-      const assistantMsg = { role: 'assistant', content: data.content[0].text };
+      const assistantMsg = { role: 'assistant', content: data.text };
       setMessages([...newMessages, assistantMsg]);
     } catch (e) {
       setMessages([...newMessages, { role: 'assistant', content: 'Error al conectar con el asistente.' }]);
