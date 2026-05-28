@@ -16,32 +16,29 @@ export default function Mapa() {
   const [ubicacion, setUbicacion] = useState(null);
 
   useEffect(() => {
-  const loadMap = () => {
-    if (!mapRef.current) return;
-    initMap();
-  };
-
-  if (window.google && window.google.maps) {
-    loadMap();
-    return;
-  }
-
-  if (document.querySelector('script[src*="maps.googleapis"]')) {
-    const interval = setInterval(() => {
-      if (window.google && window.google.maps) {
-        clearInterval(interval);
-        loadMap();
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }
-
-  const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
-  script.async = true;
-  script.onload = loadMap;
-  document.head.appendChild(script);
-}, []);
+    const loadMap = () => {
+      if (!mapRef.current) return;
+      initMap();
+    };
+    if (window.google && window.google.maps) {
+      loadMap();
+      return;
+    }
+    if (document.querySelector('script[src*="maps.googleapis"]')) {
+      const interval = setInterval(() => {
+        if (window.google && window.google.maps) {
+          clearInterval(interval);
+          loadMap();
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly`;
+    script.async = true;
+    script.onload = loadMap;
+    document.head.appendChild(script);
+  }, []);
 
   function initMap(lat = -34.6037, lng = -58.3816) {
     mapInstance.current = new window.google.maps.Map(mapRef.current, {
@@ -56,18 +53,17 @@ export default function Mapa() {
     markersRef.current = [];
   }
 
-  function buscar() {
-    if (!window.google) return;
+  async function buscar() {
+    if (!window.google || !mapInstance.current) return;
     setLoading(true);
     setError('');
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUbicacion(loc);
         mapInstance.current.setCenter(loc);
 
-        // Marker del usuario
         new window.google.maps.Marker({
           position: loc,
           map: mapInstance.current,
@@ -75,31 +71,45 @@ export default function Mapa() {
           icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#fff', fillOpacity: 1, strokeColor: '#4CAF50', strokeWeight: 3 },
         });
 
-        const service = new window.google.maps.places.PlacesService(mapInstance.current);
-        service.nearbySearch(
-          { location: loc, radius: 2000, keyword: TIPOS[tipo].query, type: ['establishment'] },
-          (results, status) => {
-            setLoading(false);
-            limpiarMarkers();
-            if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
-              setError('No se encontraron resultados cerca.');
-              return;
-            }
-            results.slice(0, 15).forEach(place => {
-              const marker = new window.google.maps.Marker({
-                position: place.geometry.location,
-                map: mapInstance.current,
-                title: place.name,
-                icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: TIPOS[tipo].color, fillOpacity: 0.9, strokeColor: '#fff', strokeWeight: 2 },
-              });
-              const info = new window.google.maps.InfoWindow({
-                content: `<div style="color:#000;padding:4px"><b>${place.name}</b><br/>${place.vicinity || ''}<br/>${place.opening_hours?.open_now ? '✅ Abierto' : '❌ Cerrado'}</div>`,
-              });
-              marker.addListener('click', () => info.open(mapInstance.current, marker));
-              markersRef.current.push(marker);
-            });
+        try {
+          const { Place, SearchNearbyRankPreference } = await window.google.maps.importLibrary('places');
+          const request = {
+            fields: ['displayName', 'location', 'formattedAddress', 'businessStatus'],
+            locationRestriction: {
+              center: loc,
+              radius: 2000,
+            },
+            includedPrimaryTypes: tipo === 0 ? ['pharmacy'] : tipo === 1 ? ['hospital', 'doctor'] : ['medical_lab'],
+            maxResultCount: 15,
+            rankPreference: SearchNearbyRankPreference.DISTANCE,
+          };
+
+          const { places } = await Place.searchNearby(request);
+          setLoading(false);
+          limpiarMarkers();
+
+          if (!places || places.length === 0) {
+            setError('No se encontraron resultados cerca.');
+            return;
           }
-        );
+
+          places.forEach(place => {
+            const marker = new window.google.maps.Marker({
+              position: place.location,
+              map: mapInstance.current,
+              title: place.displayName,
+              icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: TIPOS[tipo].color, fillOpacity: 0.9, strokeColor: '#fff', strokeWeight: 2 },
+            });
+            const info = new window.google.maps.InfoWindow({
+              content: `<div style="color:#000;padding:4px"><b>${place.displayName}</b><br/>${place.formattedAddress || ''}</div>`,
+            });
+            marker.addListener('click', () => info.open(mapInstance.current, marker));
+            markersRef.current.push(marker);
+          });
+        } catch (e) {
+          setLoading(false);
+          setError('Error al buscar lugares: ' + e.message);
+        }
       },
       () => {
         setLoading(false);
@@ -120,10 +130,8 @@ export default function Mapa() {
           {loading ? 'Buscando...' : '📍 Buscar cerca mío'}
         </button>
       </div>
-
       {error && <p style={{ color: '#f44336' }}>{error}</p>}
       {ubicacion && <p style={{ color: '#aaa', fontSize: 13 }}>📍 {ubicacion.lat.toFixed(4)}, {ubicacion.lng.toFixed(4)}</p>}
-
       <div ref={mapRef} style={{ width: '100%', height: 500, borderRadius: 12, border: '1px solid #333' }} />
     </div>
   );
