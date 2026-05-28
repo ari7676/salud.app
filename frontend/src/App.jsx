@@ -1,3 +1,4 @@
+import Mapa from './components/mapa';
 import { useState } from 'react';
 import Dashboard from './components/Dashboard';
 import Turnos from './components/Turnos';
@@ -24,6 +25,7 @@ export default function App() {
     { id: 'vacunas', label: '💉 Vacunas' },
     { id: 'prepaga', label: '🏥 Prepaga' },
     { id: 'calendario', label: '📅 Calendario' },
+    { id: 'mapa', label: '🗺️ Mapa' },
   ];
 
   return (
@@ -53,6 +55,7 @@ export default function App() {
           {activeTab === 'vacunas' && <Vacunas usuarioId={usuarioId} />}
           {activeTab === 'prepaga' && <Prepaga usuarioId={usuarioId} />}
           {activeTab === 'calendario' && <Calendario usuarioId={usuarioId} />}
+          {activeTab === 'mapa' && <Mapa />}
         </div>
       </main>
     </>
