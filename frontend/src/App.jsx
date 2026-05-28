@@ -1,3 +1,4 @@
+import Asistente from './components/Asistente';
 import Mapa from './components/mapa';
 import { useState } from 'react';
 import Dashboard from './components/Dashboard';
@@ -26,6 +27,7 @@ export default function App() {
     { id: 'prepaga', label: '🏥 Prepaga' },
     { id: 'calendario', label: '📅 Calendario' },
     { id: 'mapa', label: '🗺️ Mapa' },
+    { id: 'asistente', label: '🤖 Asistente' },
   ];
 
   return (
@@ -56,6 +58,7 @@ export default function App() {
           {activeTab === 'prepaga' && <Prepaga usuarioId={usuarioId} />}
           {activeTab === 'calendario' && <Calendario usuarioId={usuarioId} />}
           {activeTab === 'mapa' && <Mapa />}
+          {activeTab === 'asistente' && <Asistente usuarioId={usuarioId} />}
         </div>
       </main>
     </>
