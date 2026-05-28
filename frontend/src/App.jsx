@@ -5,11 +5,26 @@ import Medicinas from './components/Medicinas';
 import HistorialClinico from './components/HistorialClinico';
 import ContactosEmergencia from './components/ContactosEmergencia';
 import CondicionesMedicas from './components/CondicionesMedicas';
+import Vacunas from './components/Vacunas';
+import Prepaga from './components/Prepaga';
+import Calendario from './components/Calendario';
 import './index.css';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const usuarioId = 1; // Por ahora usuario fijo, después login
+  const usuarioId = 1;
+
+  const tabs = [
+    { id: 'dashboard', label: '📊 Dashboard' },
+    { id: 'turnos', label: '📅 Turnos' },
+    { id: 'medicinas', label: '💊 Medicinas' },
+    { id: 'historial', label: '📋 Historial' },
+    { id: 'contactos', label: '📞 Emergencia' },
+    { id: 'condiciones', label: '🏥 Condiciones' },
+    { id: 'vacunas', label: '💉 Vacunas' },
+    { id: 'prepaga', label: '🏥 Prepaga' },
+    { id: 'calendario', label: '📅 Calendario' },
+  ];
 
   return (
     <>
@@ -21,43 +36,12 @@ export default function App() {
 
       <main className="main">
         <div className="container">
-          <div className="tabs">
-            <button
-              className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              📊 Dashboard
-            </button>
-            <button
-              className={`tab ${activeTab === 'turnos' ? 'active' : ''}`}
-              onClick={() => setActiveTab('turnos')}
-            >
-              📅 Turnos
-            </button>
-            <button
-              className={`tab ${activeTab === 'medicinas' ? 'active' : ''}`}
-              onClick={() => setActiveTab('medicinas')}
-            >
-              💊 Medicinas
-            </button>
-            <button
-              className={`tab ${activeTab === 'historial' ? 'active' : ''}`}
-              onClick={() => setActiveTab('historial')}
-            >
-              📋 Historial
-            </button>
-            <button
-              className={`tab ${activeTab === 'contactos' ? 'active' : ''}`}
-              onClick={() => setActiveTab('contactos')}
-            >
-              📞 Emergencia
-            </button>
-            <button
-              className={`tab ${activeTab === 'condiciones' ? 'active' : ''}`}
-              onClick={() => setActiveTab('condiciones')}
-            >
-              🏥 Condiciones
-            </button>
+          <div className="tabs" style={{ flexWrap: 'wrap' }}>
+            {tabs.map(t => (
+              <button key={t.id} className={`tab ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
           </div>
 
           {activeTab === 'dashboard' && <Dashboard usuarioId={usuarioId} />}
@@ -66,6 +50,9 @@ export default function App() {
           {activeTab === 'historial' && <HistorialClinico usuarioId={usuarioId} />}
           {activeTab === 'contactos' && <ContactosEmergencia usuarioId={usuarioId} />}
           {activeTab === 'condiciones' && <CondicionesMedicas usuarioId={usuarioId} />}
+          {activeTab === 'vacunas' && <Vacunas usuarioId={usuarioId} />}
+          {activeTab === 'prepaga' && <Prepaga usuarioId={usuarioId} />}
+          {activeTab === 'calendario' && <Calendario usuarioId={usuarioId} />}
         </div>
       </main>
     </>

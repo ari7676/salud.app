@@ -381,6 +381,74 @@ app.delete('/api/condiciones/:id', (req, res) => {
   }
 });
 
+// ============================================
+// RUTAS: VACUNAS
+// ============================================
+
+app.get('/api/vacunas/:usuario_id', (req, res) => {
+  try {
+    const results = db.prepare('SELECT * FROM vacunas WHERE usuario_id = ? ORDER BY fecha_aplicacion DESC').all(req.params.usuario_id);
+    res.json(results);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/vacunas', (req, res) => {
+  try {
+    const { usuario_id, nombre, fecha_aplicacion, fecha_proxima, dosis, numero_dosis, total_dosis, laboratorio, lote, lugar_aplicacion, medico, estado, notas } = req.body;
+    const result = db.prepare(`INSERT INTO vacunas (usuario_id, nombre, fecha_aplicacion, fecha_proxima, dosis, numero_dosis, total_dosis, laboratorio, lote, lugar_aplicacion, medico, estado, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(usuario_id, nombre, fecha_aplicacion || null, fecha_proxima || null, dosis || null, numero_dosis || 1, total_dosis || null, laboratorio || null, lote || null, lugar_aplicacion || null, medico || null, estado || 'aplicada', notas || null);
+    res.json({ id: result.lastInsertRowid, message: 'Vacuna creada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.put('/api/vacunas/:id', (req, res) => {
+  try {
+    const { nombre, fecha_aplicacion, fecha_proxima, dosis, numero_dosis, total_dosis, laboratorio, lote, lugar_aplicacion, medico, estado, notas } = req.body;
+    db.prepare(`UPDATE vacunas SET nombre=?, fecha_aplicacion=?, fecha_proxima=?, dosis=?, numero_dosis=?, total_dosis=?, laboratorio=?, lote=?, lugar_aplicacion=?, medico=?, estado=?, notas=? WHERE id=?`).run(nombre, fecha_aplicacion || null, fecha_proxima || null, dosis || null, numero_dosis || 1, total_dosis || null, laboratorio || null, lote || null, lugar_aplicacion || null, medico || null, estado || 'aplicada', notas || null, req.params.id);
+    res.json({ message: 'Vacuna actualizada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/vacunas/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM vacunas WHERE id = ?').run(req.params.id);
+    res.json({ message: 'Vacuna eliminada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// ============================================
+// RUTAS: PREPAGAS
+// ============================================
+
+app.get('/api/prepagas/:usuario_id', (req, res) => {
+  try {
+    const results = db.prepare('SELECT * FROM prepagas WHERE usuario_id = ?').all(req.params.usuario_id);
+    res.json(results);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/prepagas', (req, res) => {
+  try {
+    const { usuario_id, nombre, plan, numero_afiliado, telefono, telefono_emergencias, email, web, app_link, vencimiento_carnet, observaciones } = req.body;
+    const result = db.prepare(`INSERT INTO prepagas (usuario_id, nombre, plan, numero_afiliado, telefono, telefono_emergencias, email, web, app_link, vencimiento_carnet, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(usuario_id, nombre, plan || null, numero_afiliado || null, telefono || null, telefono_emergencias || null, email || null, web || null, app_link || null, vencimiento_carnet || null, observaciones || null);
+    res.json({ id: result.lastInsertRowid, message: 'Prepaga creada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.put('/api/prepagas/:id', (req, res) => {
+  try {
+    const { nombre, plan, numero_afiliado, telefono, telefono_emergencias, email, web, app_link, vencimiento_carnet, observaciones } = req.body;
+    db.prepare(`UPDATE prepagas SET nombre=?, plan=?, numero_afiliado=?, telefono=?, telefono_emergencias=?, email=?, web=?, app_link=?, vencimiento_carnet=?, observaciones=? WHERE id=?`).run(nombre, plan || null, numero_afiliado || null, telefono || null, telefono_emergencias || null, email || null, web || null, app_link || null, vencimiento_carnet || null, observaciones || null, req.params.id);
+    res.json({ message: 'Prepaga actualizada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/prepagas/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM prepagas WHERE id = ?').run(req.params.id);
+    res.json({ message: 'Prepaga eliminada' });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
