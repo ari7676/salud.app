@@ -3,6 +3,7 @@ import sqlite3 from 'sqlite3';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fetch from 'node-fetch';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
