@@ -494,6 +494,81 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
   }
 });
 
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// Crear carpeta uploads si no existe
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.html', '.jpg', '.jpeg', '.png', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    allowed.includes(ext) ? cb(null, true) : cb(new Error('Tipo de archivo no permitido'));
+  }
+});
+
+// Subir archivo
+app.post('/api/archivos', upload.single('archivo'), async (req, res) => {
+  try {
+    const { usuario_id, descripcion } = req.body;
+    const result = await dbRun(
+      `INSERT INTO archivos (usuario_id, nombre_original, nombre_archivo, tipo, tamanio, descripcion) VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuario_id, req.file.originalname, req.file.filename, req.file.mimetype, req.file.size, descripcion || '']
+    );
+    res.json({ id: result.lastID, mensaje: 'Archivo subido' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar archivos de un usuario
+app.get('/api/archivos/:usuario_id', async (req, res) => {
+  try {
+    const archivos = await dbAll('SELECT * FROM archivos WHERE usuario_id = ? ORDER BY created_at DESC', [req.params.usuario_id]);
+    res.json(archivos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Descargar archivo
+app.get('/api/archivos/download/:filename', (req, res) => {
+  const filePath = path.join(uploadsDir, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+  res.download(filePath);
+});
+
+// Eliminar archivo
+app.delete('/api/archivos/:id', async (req, res) => {
+  try {
+    const archivo = await dbGet('SELECT * FROM archivos WHERE id = ?', [req.params.id]);
+    if (archivo) {
+      const filePath = path.join(uploadsDir, archivo.nombre_archivo);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await dbRun('DELETE FROM archivos WHERE id = ?', [req.params.id]);
+    }
+    res.json({ mensaje: 'Archivo eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Servir archivos estáticos
+app.use('/uploads', express.static(uploadsDir));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
