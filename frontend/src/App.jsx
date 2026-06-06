@@ -17,7 +17,7 @@ export default function App() {
   const usuarioId = 1;
 
   const tabs = [
-    { id: 'dashboard', label: '📊 Dashboard' },
+    { id: 'dashboard', label: '👤 Mi Perfil' },
     { id: 'turnos', label: '📅 Turnos' },
     { id: 'medicinas', label: '💊 Medicinas' },
     { id: 'historial', label: '📋 Historial' },

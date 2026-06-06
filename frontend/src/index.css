@@ -338,3 +338,41 @@ p { color: var(--text-light); }
   h1 { font-size: 24px; }
   h2 { font-size: 20px; }
 }
+
+@media (max-width: 600px) {
+  .container {
+    padding: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .tabs {
+    gap: 4px;
+  }
+
+  .tab {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+
+  .form-input, .btn {
+    font-size: 0.9rem;
+  }
+
+  /* Mapa */
+  div[style*="height: 500px"] {
+    height: 300px !important;
+  }
+
+  /* Asistente */
+  div[style*="height: 600"] {
+    height: 70vh !important;
+  }
+
+  /* Burbujas de chat */
+  div[style*="maxWidth: '75%'"] {
+    max-width: 90% !important;
+  }
+}

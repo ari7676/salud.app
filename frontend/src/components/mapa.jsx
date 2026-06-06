@@ -75,10 +75,10 @@ export default function Mapa() {
           const { Place, SearchNearbyRankPreference } = await window.google.maps.importLibrary('places');
           const request = {
             fields: ['displayName', 'location', 'formattedAddress', 'businessStatus'],
-            locationRestriction: {
+            locationRestriction: new window.google.maps.Circle({
               center: loc,
               radius: 2000,
-            },
+       }),
             includedPrimaryTypes: tipo === 0 ? ['pharmacy'] : tipo === 1 ? ['hospital', 'doctor'] : ['medical_lab'],
             maxResultCount: 15,
             rankPreference: SearchNearbyRankPreference.DISTANCE,
