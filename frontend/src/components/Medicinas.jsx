@@ -106,16 +106,73 @@ export default function Medicinas({ usuarioId }) {
           <h3 style={{ marginBottom: '20px' }}>Agregar nueva medicina</h3>
           <form onSubmit={handleSubmit} className="form">
             <div className="form-group">
-              <label>Nombre de la droga *</label>
-              <input
-                type="text"
-                name="nombre_droga"
-                placeholder="Atorvastatina, Metformina, etc"
-                value={formData.nombre_droga}
-                onChange={handleChange}
-                required
-              />
-            </div>
+  <label>Nombre de la droga *</label>
+  <input
+    type="text"
+    name="nombre_droga"
+    placeholder="Escribí para buscar..."
+    value={formData.nombre_droga}
+    onChange={handleChange}
+    list="vademecum"
+    required
+  />
+  <datalist id="vademecum">
+    <option value="Ácido acetilsalicílico (Aspirina)" />
+    <option value="Ácido fólico" />
+    <option value="Ácido valproico" />
+    <option value="Alprazolam" />
+    <option value="Amiodarona" />
+    <option value="Amoxicilina" />
+    <option value="Amoxicilina + Clavulánico" />
+    <option value="Atenolol" />
+    <option value="Atorvastatina" />
+    <option value="Azitromicina" />
+    <option value="Bisoprolol" />
+    <option value="Carvedilol" />
+    <option value="Ciprofloxacina" />
+    <option value="Clonazepam" />
+    <option value="Clopidogrel" />
+    <option value="Diazepam" />
+    <option value="Digoxina" />
+    <option value="Enalapril" />
+    <option value="Escitalopram" />
+    <option value="Esomeprazol" />
+    <option value="Espironolactona" />
+    <option value="Fluoxetina" />
+    <option value="Furosemida" />
+    <option value="Hidroclorotiazida" />
+    <option value="Ibuprofeno" />
+    <option value="Insulina Glargina" />
+    <option value="Insulina Regular" />
+    <option value="Irbesartán" />
+    <option value="Lansoprazol" />
+    <option value="Levotiroxina" />
+    <option value="Lisinopril" />
+    <option value="Lorazepam" />
+    <option value="Losartán" />
+    <option value="Metformina" />
+    <option value="Metoprolol" />
+    <option value="Metronidazol" />
+    <option value="Midazolam" />
+    <option value="Naproxeno" />
+    <option value="Nifedipina" />
+    <option value="Nistatina" />
+    <option value="Omeprazol" />
+    <option value="Paracetamol" />
+    <option value="Pantoprazol" />
+    <option value="Prednisona" />
+    <option value="Quetiapina" />
+    <option value="Ramipril" />
+    <option value="Risperidona" />
+    <option value="Rosuvastatina" />
+    <option value="Sertralina" />
+    <option value="Simvastatina" />
+    <option value="Tramadol" />
+    <option value="Valsartán" />
+    <option value="Venlafaxina" />
+    <option value="Warfarina" />
+  </datalist>
+</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
               <div className="form-group">
