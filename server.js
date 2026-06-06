@@ -491,6 +491,7 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
     const data = await response.json();
     res.json({ text: data.content[0].text });
   } catch (err) {
+    console.error('Error asistente:', err);
     res.status(500).json({ error: err.message });
   }
 });
