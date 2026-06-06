@@ -42,7 +42,6 @@ export default function Vacunas({ usuarioId }) {
   const handleEliminar = async (id) => { if (confirm('¿Eliminar?')) { await apiDelete(`/vacunas/${id}`); cargar(); } };
 
   const vFiltradas = filtro === 'todas' ? vacunas : vacunas.filter(v => v.estado === filtro);
-
   const getColor = (estado) => ({ aplicada: '#4caf50', pendiente: '#ff9800', vencida: '#f44336', completa: '#2196f3' }[estado] || '#999');
 
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Cargando...</div>;
@@ -92,7 +91,53 @@ export default function Vacunas({ usuarioId }) {
         <div style={{ background: '#fff', padding: 15, border: '1px solid #ddd', borderRadius: 8 }}>
           <h3>{editingId ? 'Editar Vacuna' : 'Nueva Vacuna'}</h3>
 
-          {[['nombre', 'Nombre *', 'text', 'Ej: Triple viral, COVID-19, Gripe'],
+          <div style={{ marginBottom: 10 }}>
+            <label><strong>Vacuna *</strong></label>
+            <select name="nombre" value={form.nombre} onChange={handleChange} style={{ width: '100%', padding: 8 }}>
+              <option value="">Seleccionar vacuna...</option>
+              <optgroup label="Plan Nacional de Vacunación">
+                <option>BCG (Tuberculosis)</option>
+                <option>Hepatitis B (RN)</option>
+                <option>Pentavalente (DTP + Hib + HepB)</option>
+                <option>Sabin (Polio oral)</option>
+                <option>IPV (Polio inyectable)</option>
+                <option>Rotavirus</option>
+                <option>Neumococo conjugada</option>
+                <option>Meningococo B</option>
+                <option>Meningococo ACWY</option>
+                <option>Triple viral (SRP)</option>
+                <option>Triple bacteriana (DTP)</option>
+                <option>Doble bacteriana (dT)</option>
+                <option>Varicela</option>
+                <option>Hepatitis A</option>
+                <option>Fiebre amarilla</option>
+                <option>Fiebre hemorrágica argentina (Candid #1)</option>
+                <option>HPV (Virus Papiloma Humano)</option>
+              </optgroup>
+              <optgroup label="Gripe y COVID">
+                <option>Gripe (Influenza) estacional</option>
+                <option>COVID-19 - Pfizer/BioNTech</option>
+                <option>COVID-19 - Moderna</option>
+                <option>COVID-19 - AstraZeneca</option>
+                <option>COVID-19 - Sinopharm</option>
+                <option>COVID-19 - Sputnik V</option>
+                <option>COVID-19 - Janssen</option>
+              </optgroup>
+              <optgroup label="Otras vacunas">
+                <option>Hepatitis B (adultos)</option>
+                <option>Neumococo polisacárida (23v)</option>
+                <option>Herpes Zóster</option>
+                <option>Cólera</option>
+                <option>Fiebre tifoidea</option>
+                <option>Rabia</option>
+                <option>Meningococo C</option>
+                <option>Dengue</option>
+              </optgroup>
+              <option value="Otra">Otra (especificar en notas)</option>
+            </select>
+          </div>
+
+          {[
             ['fecha_aplicacion', 'Fecha de Aplicación', 'date', ''],
             ['fecha_proxima', 'Fecha Próxima Dosis', 'date', ''],
             ['dosis', 'Dosis', 'text', 'Ej: 0.5ml'],
