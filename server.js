@@ -508,11 +508,14 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
       return res.status(500).json({ error: 'Respuesta inválida de Gemini', data });
     }
     res.json({ text });
-} catch (err) {
+  } catch (err) {
     console.error('Error asistente:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+import multer from 'multer';
+import path from 'path';
 import fs from 'fs';
 
 // Crear carpeta uploads si no existe
