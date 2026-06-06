@@ -489,6 +489,10 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
     });
 
     const data = await response.json();
+    console.log('Anthropic response:', JSON.stringify(data));
+    if (!data.content || !data.content[0]) {
+      return res.status(500).json({ error: 'Respuesta inválida de Anthropic', data });
+    }
     res.json({ text: data.content[0].text });
   } catch (err) {
     console.error('Error asistente:', err);
