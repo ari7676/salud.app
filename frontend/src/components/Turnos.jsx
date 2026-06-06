@@ -102,16 +102,48 @@ export default function Turnos({ usuarioId }) {
           <h3 style={{ marginBottom: '20px' }}>Crear nuevo turno</h3>
           <form onSubmit={handleSubmit} className="form">
             <div className="form-group">
-              <label>Especialidad *</label>
-              <input
-                type="text"
-                name="especialidad"
-                placeholder="Cardiología, Oftalmología, etc"
-                value={formData.especialidad}
-                onChange={handleChange}
-                required
-              />
-            </div>
+  <label>Especialidad *</label>
+  <select name="especialidad" value={formData.especialidad} onChange={handleChange} required>
+    <option value="">Seleccionar especialidad...</option>
+    <option>Cardiología</option>
+    <option>Clínica Médica</option>
+    <option>Dermatología</option>
+    <option>Endocrinología</option>
+    <option>Gastroenterología</option>
+    <option>Ginecología</option>
+    <option>Hematología</option>
+    <option>Infectología</option>
+    <option>Kinesiología</option>
+    <option>Nefrología</option>
+    <option>Neumología</option>
+    <option>Neurología</option>
+    <option>Neurocirugía</option>
+    <option>Nutrición</option>
+    <option>Obstetricia</option>
+    <option>Oftalmología</option>
+    <option>Oncología</option>
+    <option>Ortopedia y Traumatología</option>
+    <option>Otorrinolaringología</option>
+    <option>Pediatría</option>
+    <option>Psicología</option>
+    <option>Psiquiatría</option>
+    <option>Reumatología</option>
+    <option>Tocoginecología</option>
+    <option>Urología</option>
+    <option>Cirugía General</option>
+    <option>Cirugía Plástica</option>
+    <option>Cirugía Cardiovascular</option>
+    <option>Medicina del Trabajo</option>
+    <option>Medicina Familiar</option>
+    <option>Odontología</option>
+    <option>Fonoaudiología</option>
+    <option>Terapia Ocupacional</option>
+    <option>Hemoterapia</option>
+    <option>Diagnóstico por Imágenes</option>
+    <option>Laboratorio</option>
+    <option>Otra</option>
+  </select>
+</div>
 
             <div className="form-group">
               <label>Médico</label>
