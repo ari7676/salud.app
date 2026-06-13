@@ -473,7 +473,7 @@ ${medicinas.length ? medicinas.map(m => `- ${m.nombre_droga} ${m.dosis}${m.unida
 CONDICIONES MÉDICAS:
 ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones'}`;
 
-    // Convertir mensajes al formato Gemini
+    // Convertir mensajes al formato 
     const geminiContents = messages
   .filter(m => m.content && m.content.trim())
   .map(m => ({
@@ -482,7 +482,7 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
   }));
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
