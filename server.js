@@ -482,20 +482,23 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
   }));
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: system }] },
-            { role: 'model', parts: [{ text: 'Entendido, voy a ayudarte con tu salud.' }] },
-            ...geminiContents
-          ],
-          generationConfig: { maxOutputTokens: 1024 }
-        }),
-      }
-    );
+  'https://api.groq.com/openai/v1/chat/completions',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: system },
+        ...messages
+      ],
+      max_tokens: 1024
+    }),
+  }
+);
 
     const rawText = await response.text();
     console.log('Gemini status:', response.status);
@@ -509,7 +512,7 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
       });
     }
 
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = data?.choices?.[0]?.message?.content;
     if (!text) {
       return res.status(500).json({ error: 'Respuesta inválida de Gemini', data });
     }
