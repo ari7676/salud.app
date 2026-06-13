@@ -487,8 +487,11 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: geminiContents,
+          contents: [
+            { role: 'user', parts: [{ text: system }] },
+            { role: 'model', parts: [{ text: 'Entendido, voy a ayudarte con tu salud.' }] },
+            ...geminiContents
+          ],
           generationConfig: { maxOutputTokens: 1024 }
         }),
       }
