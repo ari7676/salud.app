@@ -497,9 +497,10 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
       }
     );
 
-    const data = await response.json();
+    const rawText = await response.text();
     console.log('Gemini status:', response.status);
-    console.log('Gemini response:', JSON.stringify(data));
+    console.log('Gemini raw:', rawText);
+    const data = rawText ? JSON.parse(rawText) : {};
 
     if (response.status !== 200) {
       return res.status(500).json({
