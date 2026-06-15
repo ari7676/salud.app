@@ -89,7 +89,7 @@ app.put('/api/usuarios/:id', async (req, res) => {
   const { nombre, fecha_nacimiento, telefono, localidad, obra_social, plan, salud_publica } = req.body;
   try {
     await dbRun(
-      `UPDATE usuarios SET nombre=?, fecha_nacimiento=?, telefono=?, localidad=?, obra_social=?, plan=?, salud_publica=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+      `UPDATE usuarios SET nombre=?, fecha_nacimiento=?, telefono=?, localidad=?, obra_social=?, plan=?, salud_publica=? WHERE id=?`,
       [nombre, fecha_nacimiento || null, telefono || null, localidad || null, obra_social || null, plan || null, salud_publica || 0, req.params.id]
     );
     res.json({ mensaje: 'Perfil actualizado' });
