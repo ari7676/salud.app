@@ -34,6 +34,14 @@ const dbAll = (sql, params = []) =>
     err ? rej(err) : res(rows);
   }));
 
+
+// Migración: agregar columnas nuevas si no existen
+db.serialize(() => {
+  db.run(`ALTER TABLE usuarios ADD COLUMN localidad TEXT`, () => {});
+  db.run(`ALTER TABLE usuarios ADD COLUMN plan TEXT`, () => {});
+  db.run(`ALTER TABLE usuarios ADD COLUMN salud_publica INTEGER DEFAULT 0`, () => {});
+});
+
 // ============================================
 // USUARIOS
 // ============================================
@@ -71,6 +79,20 @@ app.get('/api/usuarios/:id', async (req, res) => {
     }
     
     res.json({ usuario, familia });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Actualizar perfil de usuario
+app.put('/api/usuarios/:id', async (req, res) => {
+  const { nombre, fecha_nacimiento, telefono, localidad, obra_social, plan, salud_publica } = req.body;
+  try {
+    await dbRun(
+      `UPDATE usuarios SET nombre=?, fecha_nacimiento=?, telefono=?, localidad=?, obra_social=?, plan=?, salud_publica=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+      [nombre, fecha_nacimiento || null, telefono || null, localidad || null, obra_social || null, plan || null, salud_publica || 0, req.params.id]
+    );
+    res.json({ mensaje: 'Perfil actualizado' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -473,27 +495,41 @@ ${medicinas.length ? medicinas.map(m => `- ${m.nombre_droga} ${m.dosis}${m.unida
 CONDICIONES MÉDICAS:
 ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones'}`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        system,
-        messages,
-      }),
-    });
+    // Convertir mensajes al formato Gemini
+    const geminiContents = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: system }] },
+          contents: geminiContents,
+          generationConfig: { maxOutputTokens: 1024 }
+        }),
+      }
+    );
 
     const data = await response.json();
-    console.log('Anthropic response:', JSON.stringify(data));
-    if (!data.content || !data.content[0]) {
-      return res.status(500).json({ error: 'Respuesta inválida de Anthropic', data });
+    console.log('Gemini status:', response.status);
+    console.log('Gemini response:', JSON.stringify(data));
+
+    if (response.status !== 200) {
+      return res.status(500).json({
+        error: `Gemini error ${response.status}: ${data?.error?.message || 'desconocido'}`,
+        gemini_raw: data
+      });
     }
-    res.json({ text: data.content[0].text });
+
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      return res.status(500).json({ error: 'Respuesta inválida de Gemini', data });
+    }
+    res.json({ text });
   } catch (err) {
     console.error('Error asistente:', err);
     res.status(500).json({ error: err.message });

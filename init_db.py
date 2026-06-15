@@ -152,6 +152,19 @@ data = [
 for sql, params in data:
     cursor.execute(sql, params)
 
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS archivos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    nombre_original TEXT NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo TEXT,
+    tamanio INTEGER,
+    descripcion TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+''')
+
 conn.commit()
 conn.close()
 print('BD creada OK')
