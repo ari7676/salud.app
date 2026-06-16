@@ -472,11 +472,38 @@ ${medicinas.length ? medicinas.map(m => `- ${m.nombre_droga} ${m.dosis}${m.unida
 CONDICIONES MÉDICAS:
 ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones'}`;
 
-    // Convertir mensajes al formato Gemini
-    const geminiContents = messages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: system },
+          ...messages
+        ],
+        max_tokens: 1024
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.status !== 200) {
+      return res.status(500).json({ error: `Groq error ${response.status}: ${data?.error?.message || 'desconocido'}` });
+    }
+
+    const text = data?.choices?.[0]?.message?.content;
+    if (!text) {
+      return res.status(500).json({ error: 'Respuesta inválida de Groq', data });
+    }
+    res.json({ text });
+  } catch (err) {
+    console.error('Error asistente:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
