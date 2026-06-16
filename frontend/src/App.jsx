@@ -48,17 +48,16 @@ export default function App() {
             ))}
           </div>
 
-          {activeTab === 'dashboard' && <Dashboard usuarioId={usuarioId} />}
-          {activeTab === 'turnos' && <Turnos usuarioId={usuarioId} />}
-          {activeTab === 'medicinas' && <Medicinas usuarioId={usuarioId} />}
-          {activeTab === 'historial' && <HistorialClinico usuarioId={usuarioId} />}
-          {activeTab === 'contactos' && <ContactosEmergencia usuarioId={usuarioId} />}
-          {activeTab === 'condiciones' && <CondicionesMedicas usuarioId={usuarioId} />}
-          {activeTab === 'vacunas' && <Vacunas usuarioId={usuarioId} />}
-          {activeTab === 'prepaga' && <Prepaga usuarioId={usuarioId} />}
-          {activeTab === 'calendario' && <Calendario usuarioId={usuarioId} />}
-          {activeTab === 'mapa' && <Mapa />}
-          {activeTab === 'asistente' && <Asistente usuarioId={usuarioId} />}
+          {activeTab === 'dashboard' && <Dashboard usuario_Id={usuarioId} />}
+          {activeTab === 'turnos' && <Turnos usuario_Id={usuarioId} />}
+          {activeTab === 'medicinas' && <Medicinas usuario_Id={usuarioId} />}
+          {activeTab === 'historial' && <HistorialClinico usuario_id={usuarioId} />}
+          {activeTab === 'contactos' && <ContactosEmergencia usuario_id={usuarioId} />}
+          {activeTab === 'condiciones' && <CondicionesMedicas usuario_id={usuarioId} />}
+          {activeTab === 'vacunas' && <Vacunas usuario_id={usuarioId} />}
+          {activeTab === 'prepaga' && <Prepaga usuario_id={usuarioId} />}
+          {activeTab === 'calendario' && <Calendario usuario_id={usuarioId} />}
+          {activeTab === 'asistente' && <Asistente usuario_id={usuarioId} />}
         </div>
       </main>
     </>
