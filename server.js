@@ -460,30 +460,25 @@ app.post('/api/asistente', async (req, res) => {
       dbAll('SELECT * FROM condiciones_medicas WHERE usuario_id = ?', [usuario_id]),
     ]);
 
-    const system = `Sos un asistente de salud personal. Respondé en español, de forma clara y empática.
-No reemplazás a un médico — siempre recomendá consultar un profesional ante dudas serias.
+    var turnosText = turnos.length ? turnos.map(function(t) { return '- ' + t.especialidad + ' con ' + t.medico + ' el ' + t.fecha_turno + ' a las ' + t.hora_turno; }).join('\n') : 'Sin turnos';
+    var medicinasText = medicinas.length ? medicinas.map(function(m) { return '- ' + m.nombre_droga + ' ' + m.dosis + m.unidad + ' cada ' + m.frecuencia; }).join('\n') : 'Sin medicamentos';
+    var condicionesText = condiciones.length ? condiciones.map(function(c) { return '- ' + c.nombre + ': ' + (c.descripcion || 'sin descripcion'); }).join('\n') : 'Sin condiciones';
 
-TURNOS MÉDICOS:
-${turnos.length ? turnos.map(t => `- ${t.especialidad} con ${t.medico} el ${t.fecha_turno} a las ${t.hora_turno}`).join('\n') : 'Sin turnos'}
-
-MEDICAMENTOS:
-${medicinas.length ? medicinas.map(m => `- ${m.nombre_droga} ${m.dosis}${m.unidad} cada ${m.frecuencia}`).join('\n') : 'Sin medicamentos'}
-
-CONDICIONES MÉDICAS:
-${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || 'sin descripción'}`).join('\n') : 'Sin condiciones'}`;
+    var system = 'Sos un asistente de salud personal. Responde en espanol, de forma clara y empatica.\n' +
+      'No reemplazas a un medico - siempre recomenda consultar un profesional ante dudas serias.\n\n' +
+      'TURNOS MEDICOS:\n' + turnosText + '\n\n' +
+      'MEDICAMENTOS:\n' + medicinasText + '\n\n' +
+      'CONDICIONES MEDICAS:\n' + condicionesText;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Authorization': 'Bearer ' + process.env.GROQ_API_KEY
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: system },
-          ...messages
-        ],
+        messages: [{ role: 'system', content: system }].concat(messages),
         max_tokens: 1024
       })
     });
@@ -491,12 +486,12 @@ ${condiciones.length ? condiciones.map(c => `- ${c.nombre}: ${c.descripcion || '
     const data = await response.json();
 
     if (response.status !== 200) {
-      return res.status(500).json({ error: `Groq error ${response.status}: ${data?.error?.message || 'desconocido'}` });
+      return res.status(500).json({ error: 'Groq error ' + response.status + ': ' + (data && data.error ? data.error.message : 'desconocido') });
     }
 
-    const text = data?.choices?.[0]?.message?.content;
+    const text = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!text) {
-      return res.status(500).json({ error: 'Respuesta inválida de Groq', data });
+      return res.status(500).json({ error: 'Respuesta invalida de Groq' });
     }
     res.json({ text });
   } catch (err) {
